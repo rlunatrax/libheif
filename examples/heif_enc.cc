@@ -1006,8 +1006,7 @@ static void show_list_of_encoders(const heif_encoder_descriptor*const* encoder_d
 }
 
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
   int quality = 50;
   bool lossless = false;
   std::string output_filename;
