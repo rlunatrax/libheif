@@ -206,8 +206,7 @@ Error ImageGrid::parse(const std::vector<uint8_t>& data)
 }
 
 
-std::vector<uint8_t> ImageGrid::write() const
-{
+std::vector<uint8_t> ImageGrid::write() const {
   int field_size;
 
   if (m_output_width > 0xFFFF ||
@@ -1923,8 +1922,7 @@ Error HeifContext::encode_image_as_hevc(const std::shared_ptr<HeifPixelImage>& i
                                         struct heif_encoder* encoder,
                                         const struct heif_encoding_options* options,
                                         enum heif_image_input_class input_class,
-                                        std::shared_ptr<Image>& out_image)
-{
+                                        std::shared_ptr<Image>& out_image) {
   heif_item_id image_id = m_heif_file->add_new_image("hvc1");
   out_image = std::make_shared<Image>(this, image_id);
 

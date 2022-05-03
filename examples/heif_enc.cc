@@ -40,6 +40,7 @@
 
 #include <libheif/heif.h>
 
+
 #if HAVE_LIBJPEG
 extern "C" {
 // Prevent duplicate definition for libjpeg-turbo v2.0
@@ -1004,9 +1005,12 @@ static void show_list_of_encoders(const heif_encoder_descriptor*const* encoder_d
               << "\n";
   }
 }
+#define MAX_ENCODERS 5
 
 
 int main(int argc, char** argv) {
+
+  //VARIABLES
   int quality = 50;
   bool lossless = false;
   std::string output_filename;
@@ -1016,16 +1020,19 @@ int main(int argc, char** argv) {
   int output_bit_depth = 10;
   bool enc_av1f = false;
   bool crop_to_even_size = false;
-
   std::vector<std::string> raw_params;
+  struct heif_encoder* encoder = nullptr;
+  const heif_encoder_descriptor* encoder_descriptors[MAX_ENCODERS];
+  const heif_encoder_descriptor* active_encoder_descriptor = nullptr;
+  struct heif_error error;
 
 
+  //COMMAND LINE ARGUMENTS
   while (true) {
     int option_index = 0;
     int c = getopt_long(argc, argv, "hq:Lo:vPp:t:b:AEe:", long_options, &option_index);
     if (c == -1)
       break;
-
     switch (c) {
       case 'h':
         show_help(argv[0]);
@@ -1076,7 +1083,8 @@ int main(int argc, char** argv) {
         nclx_full_range = atoi(optarg);
         break;
     }
-  }
+  } //end while(true)
+
 
   if (quality < 0 || quality > 100) {
     std::cerr << "Invalid quality factor. Must be between 0 and 100.\n";
@@ -1092,36 +1100,28 @@ int main(int argc, char** argv) {
   }
 
 
-
-  // ==============================================================================
-
-  std::shared_ptr<heif_context> context(heif_context_alloc(),
-                                        [](heif_context* c) { heif_context_free(c); });
+  //CREATE CONTEXT
+  std::shared_ptr<heif_context> context(heif_context_alloc(), [](heif_context* c) { heif_context_free(c); });
   if (!context) {
     std::cerr << "Could not create context object\n";
     return 1;
   }
 
-
-  struct heif_encoder* encoder = nullptr;
-
-#define MAX_ENCODERS 5
-  const heif_encoder_descriptor* encoder_descriptors[MAX_ENCODERS];
+  //GET ENCODER DESCRIPTORS
   int count = heif_context_get_encoder_descriptors(context.get(),
                                                    enc_av1f ? heif_compression_AV1 : heif_compression_HEVC,
                                                    nullptr,
                                                    encoder_descriptors, MAX_ENCODERS);
-
   if (list_encoders) {
     show_list_of_encoders(encoder_descriptors, count);
     return 0;
   }
-
-  const heif_encoder_descriptor* active_encoder_descriptor = nullptr;
+  
+  //LIST ENCODERS
   if (count > 0) {
     int idx = 0;
     if (encoderId != nullptr) {
-      for (int i = 0; i <= count; i++) {
+      for (int i = 0; i <= count; i++) { //List Encoders
         if (i==count) {
           std::cerr << "Unknown encoder ID. Choose one from the list below.\n";
           show_list_of_encoders(encoder_descriptors, count);
@@ -1134,13 +1134,11 @@ int main(int argc, char** argv) {
         }
       }
     }
-
-    heif_error error = heif_context_get_encoder(context.get(), encoder_descriptors[idx], &encoder);
+    heif_error error = heif_context_get_encoder(context.get(), encoder_descriptors[idx], &encoder); //get Encoder
     if (error.code) {
       std::cerr << error.message << "\n";
       return 5;
     }
-
     active_encoder_descriptor = encoder_descriptors[idx];
   }
   else {
@@ -1148,24 +1146,27 @@ int main(int argc, char** argv) {
     return 5;
   }
 
-
+  //SHOW PARAMETERS
   if (option_show_parameters) {
     list_encoder_parameters(encoder);
     return 0;
   }
-
-
   if (optind > argc - 1) {
     show_help(argv[0]);
     return 0;
   }
 
+  for ( ; optind < argc; optind++) {
 
-  struct heif_error error;
-
-  for (; optind < argc; optind++) {
+    //VARIABLES
     std::string input_filename = argv[optind];
+    std::string suffix;
+    enum { PNG, JPEG, Y4M } filetype = JPEG;
+    std::shared_ptr<heif_image> image;
+    struct heif_image_handle* handle;
+    heif_color_profile_nclx nclx;
 
+    //OUTPUT FILE NAMES
     if (output_filename.empty()) {
       std::string filename_without_suffix;
       std::string::size_type dot_position = input_filename.find_last_of('.');
@@ -1175,26 +1176,15 @@ int main(int argc, char** argv) {
       else {
         filename_without_suffix = input_filename;
       }
-
       output_filename = filename_without_suffix + (enc_av1f ? ".avif" : ".heic");
     }
 
-
-    // ==============================================================================
-
-    // get file type from file name
-
-    std::string suffix;
+    //EXTRACT FILE TYPE
     auto suffix_pos = input_filename.find_last_of('.');
     if (suffix_pos != std::string::npos) {
       suffix = input_filename.substr(suffix_pos + 1);
       std::transform(suffix.begin(), suffix.end(), suffix.begin(), ::tolower);
     }
-
-    enum
-    {
-      PNG, JPEG, Y4M
-    } filetype = JPEG;
     if (suffix == "png") {
       filetype = PNG;
     }
@@ -1202,7 +1192,7 @@ int main(int argc, char** argv) {
       filetype = Y4M;
     }
 
-    std::shared_ptr<heif_image> image;
+    //LOAD IMAGE
     if (filetype == PNG) {
       image = loadPNG(input_filename.c_str(), output_bit_depth);
     }
@@ -1213,7 +1203,7 @@ int main(int argc, char** argv) {
       image = loadJPEG(input_filename.c_str());
     }
 
-    heif_color_profile_nclx nclx;
+    //SETTERS
     error = heif_nclx_color_profile_set_matrix_coefficients(&nclx, nclx_matrix_coefficients);
     if (error.code) {
       std::cerr << "Invalid matrix coefficients specified.\n";
@@ -1233,6 +1223,7 @@ int main(int argc, char** argv) {
 
     //heif_image_set_nclx_color_profile(image.get(), &nclx);
 
+    //LOSSLESS
     if (lossless) {
       if (heif_encoder_descriptor_supportes_lossless_compression(active_encoder_descriptor)) {
         heif_encoder_set_lossless(encoder, lossless);
@@ -1241,16 +1232,17 @@ int main(int argc, char** argv) {
         std::cerr << "Warning: the selected encoder does not support lossless encoding. Encoding in lossy mode.\n";
       }
     }
-
     heif_encoder_set_lossy_quality(encoder, quality);
     heif_encoder_set_logging_level(encoder, logging_level);
 
+    //------
     set_params(encoder, raw_params);
     struct heif_encoding_options* options = heif_encoding_options_alloc();
     options->save_alpha_channel = (uint8_t) master_alpha;
     options->save_two_colr_boxes_when_ICC_and_nclx_available = (uint8_t)two_colr_boxes;
     options->output_nclx_profile = &nclx;
 
+    //CROP
     if (crop_to_even_size) {
       if (heif_image_get_primary_width(image.get()) == 1 ||
           heif_image_get_primary_height(image.get()) == 1) {
@@ -1270,13 +1262,13 @@ int main(int argc, char** argv) {
         return 1;
       }
     }
-
     if (premultiplied_alpha) {
       heif_image_set_premultiplied_alpha(image.get(), premultiplied_alpha);
     }
 
 
-    struct heif_image_handle* handle;
+
+    //ENCODE IMAGE
     error = heif_context_encode_image(context.get(),
                                       image.get(),
                                       encoder,
@@ -1288,13 +1280,10 @@ int main(int argc, char** argv) {
       return 1;
     }
 
+    //ENCODE THUMBNAIL
     if (thumbnail_bbox_size > 0) {
-      // encode thumbnail
-
       struct heif_image_handle* thumbnail_handle;
-
       options->save_alpha_channel = master_alpha && thumb_alpha;
-
       error = heif_context_encode_thumbnail(context.get(),
                                             image.get(),
                                             handle,
@@ -1307,19 +1296,50 @@ int main(int argc, char** argv) {
         std::cerr << "Could not generate thumbnail: " << error.message << "\n";
         return 5;
       }
-
       if (thumbnail_handle) {
         heif_image_handle_release(thumbnail_handle);
       }
     }
 
+    //SANDBOX
+    //************************************************************************************************************
+    int topImageCount = heif_context_get_number_of_top_level_images(context.get());
+    std::cout << "top Image Count " << topImageCount << std::endl;
+
+    int auxiliaryImageCount = heif_image_handle_get_number_of_auxiliary_images(handle, 0);
+    std::cout << "aux Image Count: " << auxiliaryImageCount << std::endl;
+
+    //QUESTION - this function implemented in heif.cc uses handle (handle->image), but I can't use handle in my code
+    // heif::HeifPixelImage* im_tset = &handle->image;
+
+    int metaboxCount = heif_image_handle_get_number_of_metadata_blocks(handle, 0);
+    std::cout << "Metadata Box Count: " << metaboxCount << std::endl;
+    // for (const auto& metadata : handle->image->get_metadata()) { }
+
+    // heif_context_debug_dump_boxes_to_file(context.get(), 1);
+
+    // std::shared_ptr<heif_image> image;
+    // struct heif_image_handle* handle;
+    
+    heif_context_get_box(context.get(), image.get(), handle, encoder);
+
+    std::cout << "End Sandbox" << std::endl;
+    //************************************************************************************************************
+
+
+
+    //FREE
     heif_image_handle_release(handle);
     heif_encoding_options_free(options);
   }
 
   heif_encoder_release(encoder);
 
+                                            
+
+  //WRITE TO FILE
   error = heif_context_write_to_file(context.get(), output_filename.c_str());
+
   if (error.code) {
     std::cerr << error.message << "\n";
     return 5;

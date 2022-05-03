@@ -105,104 +105,72 @@ namespace heif {
   {
   public:
     BoxHeader();
-
     virtual ~BoxHeader() = default;
 
     constexpr static uint64_t size_until_end_of_file = 0;
-
     uint64_t get_box_size() const
     { return m_size; }
-
     uint32_t get_header_size() const
     { return m_header_size; }
-
     uint32_t get_short_type() const
     { return m_type; }
-
     std::vector<uint8_t> get_type() const;
-
     std::string get_type_string() const;
-
     void set_short_type(uint32_t type)
     { m_type = type; }
 
-
     Error parse(BitstreamRange& range);
-
     virtual std::string dump(Indent&) const;
 
 
     // --- full box
-
     Error parse_full_box_header(BitstreamRange& range);
-
     uint8_t get_version() const
     { return m_version; }
-
     void set_version(uint8_t version)
     { m_version = version; }
-
     uint32_t get_flags() const
     { return m_flags; }
-
     void set_flags(uint32_t flags)
     { m_flags = flags; }
-
     void set_is_full_box(bool flag = true)
     { m_is_full_box = flag; }
-
     bool is_full_box_header() const
     { return m_is_full_box; }
 
-
     // --- writing
-
     size_t reserve_box_header_space(StreamWriter& writer) const;
-
     Error prepend_header(StreamWriter&, size_t box_start) const;
 
   private:
     uint64_t m_size = 0;
     uint32_t m_header_size = 0;
-
     uint32_t m_type = 0;
     std::vector<uint8_t> m_uuid_type;
-
-
     bool m_is_full_box = false;
-
     uint8_t m_version = 0;
     uint32_t m_flags = 0;
   };
 
 
-  class Box : public BoxHeader
-  {
+  class Box : public BoxHeader {
   public:
     Box() = default;
-
     Box(const BoxHeader& hdr) : BoxHeader(hdr)
     {}
 
     static Error read(BitstreamRange& range, std::shared_ptr<heif::Box>* box);
-
     virtual Error write(StreamWriter& writer) const;
 
     // check, which box version is required and set this in the (full) box header
     virtual void derive_box_version()
     { set_version(0); }
-
     void derive_box_version_recursive();
-
     std::string dump(Indent&) const override;
-
     std::shared_ptr<Box> get_child_box(uint32_t short_type) const;
-
     std::vector<std::shared_ptr<Box>> get_child_boxes(uint32_t short_type) const;
-
     const std::vector<std::shared_ptr<Box>>& get_all_child_boxes() const
     { return m_children; }
-
     int append_child_box(const std::shared_ptr<Box>& box)
     {
       m_children.push_back(box);
@@ -211,48 +179,33 @@ namespace heif {
 
   protected:
     virtual Error parse(BitstreamRange& range);
-
     std::vector<std::shared_ptr<Box>> m_children;
-
     const static int READ_CHILDREN_ALL = -1;
-
     Error read_children(BitstreamRange& range, int number = READ_CHILDREN_ALL);
-
     Error write_children(StreamWriter& writer) const;
-
     std::string dump_children(Indent&) const;
   };
 
 
-  class Box_ftyp : public Box
-  {
+  class Box_ftyp : public Box {
   public:
-    Box_ftyp()
-    {
+    Box_ftyp() {
       set_short_type(fourcc("ftyp"));
       set_is_full_box(false);
     }
-
     Box_ftyp(const BoxHeader& hdr) : Box(hdr)
     {}
 
     std::string dump(Indent&) const override;
-
     bool has_compatible_brand(uint32_t brand) const;
-
     std::vector<uint32_t> list_brands() const { return m_compatible_brands; }
-
     void set_major_brand(uint32_t major_brand)
     { m_major_brand = major_brand; }
-
     void set_minor_version(uint32_t minor_version)
     { m_minor_version = minor_version; }
-
     void clear_compatible_brands()
     { m_compatible_brands.clear(); }
-
     void add_compatible_brand(uint32_t brand);
-
     Error write(StreamWriter& writer) const override;
 
   protected:
@@ -265,15 +218,12 @@ namespace heif {
   };
 
 
-  class Box_meta : public Box
-  {
+  class Box_meta : public Box {
   public:
-    Box_meta()
-    {
+    Box_meta() {
       set_short_type(fourcc("meta"));
       set_is_full_box(true);
     }
-
     Box_meta(const BoxHeader& hdr) : Box(hdr)
     {}
 

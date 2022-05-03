@@ -93,6 +93,10 @@ set (heif_test_sources
   heif_test.cc
 )
 
+set (heif_box_sources
+  heif_box.cc
+)
+
 if(MSVC)
   set (getopt_sources
     ../extra/getopt.c

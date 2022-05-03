@@ -458,6 +458,45 @@ void heif_context_debug_dump_boxes_to_file(struct heif_context* ctx, int fd)
   (void) written;
 }
 
+
+
+
+//ADDED 5/3/2022 - by Devon Sookhoo
+//********************************************************************************************************
+LIBHEIF_API
+void heif_context_get_box(struct heif_context* ctx, const struct heif_image* image, 
+                          struct heif_image_handle* handle,
+                          struct heif_encoder* encoder) {
+  std::cout << "My lib function:\n";
+
+  //STREAM WRITER - see bitstream.h
+  StreamWriter x;
+  x.set_position(0);
+  x.write8(0x17);
+  ctx->context->write(x); //arg1: StreamWriter& writer
+  
+  //HEIF FILE
+  // ctx->context->m_heif_file->get_content_type(0);
+
+
+  //ENCODE
+  // ctx->context->encode_image_as_hevc(image, );
+
+  BitstreamRange bsr();
+
+
+  //FUNCTIONS TO STUDY - heif_context.h 
+  // ctx->context->add_exif_metadata()
+  // ctx->context->add_XMP_metadata()
+  // ctx->context->add_generic_metadata();
+  // ctx->context->write()
+  
+}
+//********************************************************************************************************
+
+
+
+
 heif_error heif_context_get_primary_image_handle(heif_context* ctx, heif_image_handle** img)
 {
   if (!img) {
@@ -1669,8 +1708,7 @@ static struct heif_error heif_file_writer_write(struct heif_context* ctx,
 
 
 struct heif_error heif_context_write_to_file(struct heif_context* ctx,
-                                             const char* filename)
-{
+                                             const char* filename) {
   heif_writer writer;
   writer.writer_api_version = 1;
   writer.write = heif_file_writer_write;

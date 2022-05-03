@@ -40,11 +40,9 @@
 
 namespace heif {
 
-  class StreamReader
-  {
+  class StreamReader {
   public:
     virtual ~StreamReader() = default;
-
     virtual int64_t get_position() const = 0;
 
     enum grow_status
@@ -69,17 +67,12 @@ namespace heif {
   };
 
 
-  class StreamReader_istream : public StreamReader
-  {
+  class StreamReader_istream : public StreamReader {
   public:
     StreamReader_istream(std::unique_ptr<std::istream>&& istr);
-
     int64_t get_position() const override;
-
     grow_status wait_for_file_size(int64_t target_size) override;
-
     bool read(void* data, size_t size) override;
-
     bool seek(int64_t position) override;
 
   private:
@@ -88,19 +81,13 @@ namespace heif {
   };
 
 
-  class StreamReader_memory : public StreamReader
-  {
+  class StreamReader_memory : public StreamReader {
   public:
     StreamReader_memory(const uint8_t* data, int64_t size, bool copy);
-
     ~StreamReader_memory() override;
-
     int64_t get_position() const override;
-
     grow_status wait_for_file_size(int64_t target_size) override;
-
     bool read(void* data, size_t size) override;
-
     bool seek(int64_t position) override;
 
   private:
@@ -290,37 +277,24 @@ namespace heif {
   {
   public:
     void write8(uint8_t);
-
     void write16(uint16_t);
-
     void write32(uint32_t);
-
     void write64(uint64_t);
-
     void write(int size, uint64_t value);
-
     void write(const std::string&);
-
     void write(const std::vector<uint8_t>&);
-
     void write(const StreamWriter&);
-
     void skip(int n);
-
     void insert(int nBytes);
 
     size_t data_size() const
     { return m_data.size(); }
-
     size_t get_position() const
     { return m_position; }
-
     void set_position(size_t pos)
     { m_position = pos; }
-
     void set_position_to_end()
     { m_position = m_data.size(); }
-
     const std::vector<uint8_t> get_data() const
     { return m_data; }
 
