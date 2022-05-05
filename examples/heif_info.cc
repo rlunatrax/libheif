@@ -97,12 +97,13 @@ void show_help(const char* argv0)
 
 int main(int argc, char** argv)
 {
+  //VARIABLES
   bool dump_boxes = false;
-
   bool write_raw_image = false;
   heif_item_id raw_image_id;
   std::string output_filename = "output.265";
 
+  //OPTIONS
   while (true) {
     int option_index = 0;
     int c = getopt_long(argc, argv, "dh", long_options, &option_index);
@@ -125,7 +126,6 @@ int main(int argc, char** argv)
         break;
     }
   }
-
   if (optind != argc - 1) {
     show_help(argv[0]);
     return 0;
@@ -134,7 +134,6 @@ int main(int argc, char** argv)
 
   (void) raw_image_id;
   (void) write_raw_image;
-
   const char* input_filename = argv[optind];
 
   // ==============================================================================
@@ -143,6 +142,7 @@ int main(int argc, char** argv)
   {
     const static int bufSize = 50;
 
+    //OPEN FILE
     uint8_t buf[bufSize];
     FILE* fh = fopen(input_filename, "rb");
     if (fh) {
@@ -155,8 +155,8 @@ int main(int argc, char** argv)
       else {
         std::cout << mime_type << "\n";
       }
-
       fclose(fh);
+
 
       char fourcc[5];
       fourcc[4]=0;
@@ -189,9 +189,8 @@ int main(int argc, char** argv)
   }
 
   // ==============================================================================
-
-  std::shared_ptr<heif_context> ctx(heif_context_alloc(),
-                                    [](heif_context* c) { heif_context_free(c); });
+  //CREATE CONTEXT
+  std::shared_ptr<heif_context> ctx(heif_context_alloc(), [](heif_context* c) { heif_context_free(c); });
   if (!ctx) {
     fprintf(stderr, "Could not create context object\n");
     return 1;

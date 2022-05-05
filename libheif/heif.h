@@ -497,12 +497,21 @@ struct heif_error heif_context_get_image_handle(struct heif_context* ctx,
 LIBHEIF_API
 void heif_context_debug_dump_boxes_to_file(struct heif_context* ctx, int fd);
 
+
+
+
 //ADDED 5/3/2022 - by Devon Sookhoo
 LIBHEIF_API
-void heif_context_get_box(struct heif_context* ctx, 
+void heif_context_print_metadata(struct heif_context* ctx, 
                           const struct heif_image* image, 
                           struct heif_image_handle* handle,
                           struct heif_encoder* encoder);
+LIBHEIF_API
+void heif_context_dump_info(struct heif_context* ctx);
+LIBHEIF_API
+void heif_context_foo();
+
+
 
 
 LIBHEIF_API

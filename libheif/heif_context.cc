@@ -1003,6 +1003,10 @@ int HeifContext::Image::get_chroma_bits_per_pixel() const
   return m_heif_context->m_heif_file->get_chroma_bits_per_pixel_from_configuration(id);
 }
 
+std::shared_ptr<HeifFile> HeifContext::get_heif_file() {
+  return m_heif_file;
+}
+
 
 Error HeifContext::decode_image_user(heif_item_id ID,
                                      std::shared_ptr<HeifPixelImage>& img,

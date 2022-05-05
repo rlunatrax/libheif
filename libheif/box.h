@@ -101,8 +101,7 @@ namespace heif {
   }
 
 
-  class BoxHeader
-  {
+  class BoxHeader {
   public:
     BoxHeader();
     virtual ~BoxHeader() = default;
@@ -163,19 +162,19 @@ namespace heif {
     virtual Error write(StreamWriter& writer) const;
 
     // check, which box version is required and set this in the (full) box header
-    virtual void derive_box_version()
-    { set_version(0); }
+    virtual void derive_box_version() { set_version(0); }
     void derive_box_version_recursive();
     std::string dump(Indent&) const override;
-    std::shared_ptr<Box> get_child_box(uint32_t short_type) const;
-    std::vector<std::shared_ptr<Box>> get_child_boxes(uint32_t short_type) const;
-    const std::vector<std::shared_ptr<Box>>& get_all_child_boxes() const
-    { return m_children; }
-    int append_child_box(const std::shared_ptr<Box>& box)
-    {
+    int append_child_box(const std::shared_ptr<Box>& box) {
       m_children.push_back(box);
       return (int) m_children.size() - 1;
     }
+    
+    //GETTERS
+    std::shared_ptr<Box> get_child_box(uint32_t short_type) const;
+    std::vector<std::shared_ptr<Box>> get_child_boxes(uint32_t short_type) const;
+    const std::vector<std::shared_ptr<Box>>& get_all_child_boxes() const { return m_children; }
+
 
   protected:
     virtual Error parse(BitstreamRange& range);

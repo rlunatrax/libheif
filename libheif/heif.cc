@@ -463,36 +463,217 @@ void heif_context_debug_dump_boxes_to_file(struct heif_context* ctx, int fd)
 
 //ADDED 5/3/2022 - by Devon Sookhoo
 //********************************************************************************************************
+void print_metadata(struct heif_image_handle* handle) {
+  //META DATA
+  auto metadata = handle->image->get_metadata();
+  std::cout << "metadata.size(): " << metadata.size() << std::endl;
+}
+void print_content(struct heif_context* ctx) {
+
+}
+void print_heif(std::shared_ptr<HeifFile> heif_file) {
+  heif_item_id primary_ID = heif_file->get_primary_image_ID();
+
+  //GET INFO
+  std::string item_type = heif_file->get_item_type(primary_ID);
+  std::string content_type = heif_file->get_content_type(primary_ID);
+  auto infe_box = heif_file->get_infe_box(primary_ID);
+
+  std::cout << "item_type: " << item_type << std::endl;
+  std::cout << "content_type: " << content_type << std::endl;
+}
+void print_boxes(struct heif_context* ctx) {
+  //GET BOXES
+  std::shared_ptr<HeifFile> heif_file = ctx->context->get_heif_file();
+  heif_item_id primary_ID = heif_file->get_primary_image_ID();
+  std::vector<Box_ipco::Property> properties;
+  heif_file->get_properties(primary_ID, properties);
+
+  //FOR EACH BOX
+  heif::Indent indent;
+  for (uint64_t i = 0; i < properties.size(); i++) {
+      auto box = properties[i].property;
+      
+      // box->get_child_box();
+      //WRITE
+      StreamWriter writer;
+      box->write(writer);
+
+      uint64_t box_size = box->get_box_size();
+      if (box_size == 0) {
+        std::cout << "Box is empty" << std::endl;
+        return;
+      }
+      box->dump(indent);
+  }
+}
+void print_box(heif::Box* box) {
+  std::cout << "box size: " << box->get_box_size() << std::endl;
+  std::cout << "header size: " << box->get_header_size() << std::endl;
+  std::cout << "short type: " << box->get_short_type() << std::endl;
+  std::cout << "String Type: " << box->get_type_string() << std::endl;
+}
+
+
 LIBHEIF_API
-void heif_context_get_box(struct heif_context* ctx, const struct heif_image* image, 
-                          struct heif_image_handle* handle,
-                          struct heif_encoder* encoder) {
-  std::cout << "My lib function:\n";
-
-  //STREAM WRITER - see bitstream.h
-  StreamWriter x;
-  x.set_position(0);
-  x.write8(0x17);
-  ctx->context->write(x); //arg1: StreamWriter& writer
+void heif_context_print_metadata(struct heif_context* ctx, const struct heif_image* image, struct heif_image_handle* handle, struct heif_encoder* encoder) {
   
-  //HEIF FILE
-  // ctx->context->m_heif_file->get_content_type(0);
+  // ctx->context->get_heif_file()->proper
 
-
-  //ENCODE
-  // ctx->context->encode_image_as_hevc(image, );
-
-  BitstreamRange bsr();
-
-
-  //FUNCTIONS TO STUDY - heif_context.h 
-  // ctx->context->add_exif_metadata()
-  // ctx->context->add_XMP_metadata()
-  // ctx->context->add_generic_metadata();
-  // ctx->context->write()
+  // print_boxes(ctx);
+  // new_context();
   
+
+  // heif_context_debug_dump_boxes_to_file(ctx, STDOUT_FILENO); // dump to stdout
+
+
+}
+
+LIBHEIF_API
+void heif_context_dump_info(struct heif_context* ctx) {
+    //GET BOXES
+  std::shared_ptr<HeifFile> heif_file = ctx->context->get_heif_file();
+  heif_item_id primary_ID = heif_file->get_primary_image_ID();
+  std::vector<Box_ipco::Property> properties;
+  heif::Indent indent;
+
+  //PROPERTIES
+  heif_file->get_properties(primary_ID, properties);
+  std::cout << "Properties Size: " << properties.size() << std::endl;
+
+  //IMAGE COUNT
+  int topImageCount = heif_context_get_number_of_top_level_images(ctx);
+  std::cout << "top Image Count " << topImageCount << std::endl;
+
+  //BOXES
+  for (uint64_t i = 0; i < properties.size(); i++) {
+      auto box = properties[i].property;
+      
+      uint64_t box_size = box->get_box_size();
+      std::cout << "box_size: " << box_size << std::endl;
+      box->dump(indent);
+  }
+
+  heif_context_debug_dump_boxes_to_file(ctx, 1);
+
 }
 //********************************************************************************************************
+
+LIBHEIF_API
+void heif_context_foo() {
+  //VARIABLES
+  struct heif_error err;
+  char input_filename[] = "/mnt/c/myX/heif.heif";
+  // char input_filename[] = "/mnt/c/myX/Devon.heic";
+
+  std::vector<Box_ipco::Property> properties;
+  // std::vector<heif::Box> properties;
+  heif::Indent indent;
+
+  //CREATE CONTEXT 
+  std::shared_ptr<heif_context> ctx(heif_context_alloc(), [](heif_context* c) { heif_context_free(c); });
+  err = heif_context_read_from_file(ctx.get(), input_filename, nullptr);
+
+  //OPEN IMAGE
+  err = heif_context_read_from_file(ctx.get(), input_filename, nullptr);
+  if (err.code != 0) {
+    std::cerr << "Could not read HEIF/AVIF file: " << err.message << "\n";
+    exit(1);
+  }
+  if (!ctx) {
+    fprintf(stderr, "Could not create context object\n");
+    exit(1);
+  }
+
+
+  std::shared_ptr<HeifFile> heif_file = ctx->context->get_heif_file();
+  heif_item_id primary_ID = heif_file->get_primary_image_ID();
+  heif_file->get_properties(primary_ID, properties);
+
+/*
+  std::cout << "Properteis Size: " << properties.size() << std::endl;
+
+  // //PRINT BOXES
+  for (uint64_t i = 0; i < properties.size(); i++) {
+      std::cout << i << "." << std::endl;
+      auto box = properties[i].property;
+      // print_box(box.get());
+
+      // box->write()
+
+      // box->read()
+      std::cout << box->dump(indent) << std::endl;      
+  } */
+
+  //GET BOXES
+  auto boxes = heif_file->get_top_level_boxes();
+  
+  //DUMP BOXES
+  auto box_infe = std::make_shared<Box_infe>();
+  for (const auto& box : boxes) {
+    heif::Indent indent;
+    std::cout << box->dump(indent) << "\n";
+
+    // box->write();
+  }
+  auto meta_box = boxes.at(1);
+  meta_box->append_child_box(box_infe);
+  StreamWriter writer;
+  meta_box->write(writer);
+
+  heif_context_debug_dump_boxes_to_file(ctx.get(), 1); // dump to stdout
+
+
+
+
+
+/*
+  //MAKE HANDLE
+  struct heif_image_handle* handle;
+  err = heif_context_get_image_handle(ctx.get(), 1, &handle);
+  if (err.code) {
+    std::cerr << "Could not read HEIF/AVIF image " << 1 << ": "
+              << err.message << "\n";
+    exit(1);
+  }
+
+  //GET METEDATA
+  int block_count = heif_image_handle_get_number_of_metadata_blocks(handle, nullptr);
+  std::cout << "block_count: " << block_count << std::endl;
+  heif_item_id ids[100];
+  heif_image_handle_get_list_of_metadata_block_IDs(handle, nullptr, ids, block_count);
+
+  for (int i = 0; i < block_count; i++) {
+      std::cout << "ids[0]: " << ids[0] << std::endl;
+
+      std::string metadata_type = heif_image_handle_get_metadata_type(handle, ids[0]);
+      std::cout << "metadata_type: " << metadata_type << std::endl;
+
+      std::string metadata_content = heif_image_handle_get_metadata_content_type(handle, ids[0]);
+      std::cout << "metadata_content: " << metadata_content << std::endl;
+
+      size_t metadata_size = heif_image_handle_get_metadata_size(handle, ids[0]);
+      std::cout << "metadata_size: " << metadata_size << std::endl;
+    
+      uint8_t* out_data = static_cast<uint8_t*>(malloc(metadata_size));
+      err = heif_image_handle_get_metadata(handle, ids[0], out_data);
+      if (err.code != 0) {
+          std::cout << "ERROR! - heif_image_handle_get_metadata" << std::endl;
+      }
+
+      //PRINT BOX
+      char c;
+      for (size_t i = 0 ; i < metadata_size; i++) {
+        c = *(out_data + i);
+        printf("%c", *(out_data + i));
+        if (isspace(c)) {
+          // printf("\n");
+        }
+      }
+  } */
+
+}
+
 
 
 

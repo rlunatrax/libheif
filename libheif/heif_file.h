@@ -64,8 +64,7 @@ namespace heif {
     std::string get_content_type(heif_item_id ID) const;
     Error get_compressed_image_data(heif_item_id ID, std::vector<uint8_t>* out_data) const;
 
-    std::shared_ptr<Box_infe> get_infe_box(heif_item_id imageID)
-    {
+    std::shared_ptr<Box_infe> get_infe_box(heif_item_id imageID) {
       auto iter = m_infe_boxes.find(imageID);
       if (iter == m_infe_boxes.end()) {
         return nullptr;
@@ -73,14 +72,10 @@ namespace heif {
 
       return iter->second;
     }
-    std::shared_ptr<Box_iref> get_iref_box()
-    { return m_iref_box; }
-    std::shared_ptr<Box_ipco> get_ipco_box()
-    { return m_ipco_box; }
-    std::shared_ptr<Box_ipma> get_ipma_box()
-    { return m_ipma_box; }
-    Error get_properties(heif_item_id imageID,
-                         std::vector<Box_ipco::Property>& properties) const;
+    std::shared_ptr<Box_iref> get_iref_box() { return m_iref_box; }
+    std::shared_ptr<Box_ipco> get_ipco_box() { return m_ipco_box; }
+    std::shared_ptr<Box_ipma> get_ipma_box() { return m_ipma_box; }
+    Error get_properties(heif_item_id imageID, std::vector<Box_ipco::Property>& properties) const;
     heif_chroma get_image_chroma_from_configuration(heif_item_id imageID) const;
     int get_luma_bits_per_pixel_from_configuration(heif_item_id imageID) const;
     int get_chroma_bits_per_pixel_from_configuration(heif_item_id imageID) const;
@@ -98,16 +93,17 @@ namespace heif {
     void add_av1C_property(heif_item_id id);
     Error set_av1C_configuration(heif_item_id id, const Box_av1C::configuration& config);
     void add_ispe_property(heif_item_id id, uint32_t width, uint32_t height);
-    void add_clap_property(heif_item_id id, uint32_t clap_width, uint32_t clap_height,
-                           uint32_t image_width, uint32_t image_height);
+    void add_clap_property(heif_item_id id, uint32_t clap_width, uint32_t clap_height, uint32_t image_width, uint32_t image_height);
     void add_pixi_property(heif_item_id id, uint8_t c1, uint8_t c2=0, uint8_t c3=0);
     void append_iloc_data(heif_item_id id, const std::vector<uint8_t>& nal_packets, uint8_t construction_method = 0);
     void append_iloc_data_with_4byte_size(heif_item_id id, const uint8_t* data, size_t size);
     void set_primary_item_id(heif_item_id id);
-    void add_iref_reference(heif_item_id from, uint32_t type,
-                            const std::vector<heif_item_id>& to);
+    void add_iref_reference(heif_item_id from, uint32_t type, const std::vector<heif_item_id>& to);
     void set_auxC_property(heif_item_id id, const std::string& type);
     void set_color_profile(heif_item_id id, const std::shared_ptr<const color_profile>& profile);
+
+    std::vector<std::shared_ptr<Box>> get_top_level_boxes() { return m_top_level_boxes; }
+
 
     // TODO: the hdlr box is probably not the right place for this. Into which box should we write comments?
     void set_hdlr_library_info(const std::string& encoder_plugin_version);

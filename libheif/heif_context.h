@@ -206,8 +206,7 @@ namespace heif {
 
 
       // --- metadata
-      void add_metadata(std::shared_ptr<ImageMetadata> metadata)
-      {
+      void add_metadata(std::shared_ptr<ImageMetadata> metadata) {
         m_metadata.push_back(std::move(metadata));
       }
       const std::vector<std::shared_ptr<ImageMetadata>>& get_metadata() const { return m_metadata; }
@@ -329,7 +328,7 @@ namespace heif {
                                const char* item_type, const char* content_type);
     void write(StreamWriter& writer);
 
-
+    std::shared_ptr<HeifFile> get_heif_file();
   private: //HeifContext
     const struct heif_decoder_plugin* get_decoder(enum heif_compression_format type) const;
     std::set<const struct heif_decoder_plugin*> m_decoder_plugins;

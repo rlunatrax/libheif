@@ -1010,6 +1010,8 @@ static void show_list_of_encoders(const heif_encoder_descriptor*const* encoder_d
 
 int main(int argc, char** argv) {
 
+  heif_context_foo();
+
   //VARIABLES
   int quality = 50;
   bool lossless = false;
@@ -1084,13 +1086,10 @@ int main(int argc, char** argv) {
         break;
     }
   } //end while(true)
-
-
   if (quality < 0 || quality > 100) {
     std::cerr << "Invalid quality factor. Must be between 0 and 100.\n";
     return 5;
   }
-
   if (logging_level > 0) {
     logging_level += 2;
 
@@ -1106,6 +1105,7 @@ int main(int argc, char** argv) {
     std::cerr << "Could not create context object\n";
     return 1;
   }
+
 
   //GET ENCODER DESCRIPTORS
   int count = heif_context_get_encoder_descriptors(context.get(),
@@ -1203,7 +1203,7 @@ int main(int argc, char** argv) {
       image = loadJPEG(input_filename.c_str());
     }
 
-    //SETTERS
+    //SETTINGS
     error = heif_nclx_color_profile_set_matrix_coefficients(&nclx, nclx_matrix_coefficients);
     if (error.code) {
       std::cerr << "Invalid matrix coefficients specified.\n";
@@ -1220,10 +1220,7 @@ int main(int argc, char** argv) {
       exit(5);
     }
     nclx.full_range_flag = (uint8_t) nclx_full_range;
-
     //heif_image_set_nclx_color_profile(image.get(), &nclx);
-
-    //LOSSLESS
     if (lossless) {
       if (heif_encoder_descriptor_supportes_lossless_compression(active_encoder_descriptor)) {
         heif_encoder_set_lossless(encoder, lossless);
@@ -1234,15 +1231,11 @@ int main(int argc, char** argv) {
     }
     heif_encoder_set_lossy_quality(encoder, quality);
     heif_encoder_set_logging_level(encoder, logging_level);
-
-    //------
     set_params(encoder, raw_params);
     struct heif_encoding_options* options = heif_encoding_options_alloc();
     options->save_alpha_channel = (uint8_t) master_alpha;
     options->save_two_colr_boxes_when_ICC_and_nclx_available = (uint8_t)two_colr_boxes;
     options->output_nclx_profile = &nclx;
-
-    //CROP
     if (crop_to_even_size) {
       if (heif_image_get_primary_width(image.get()) == 1 ||
           heif_image_get_primary_height(image.get()) == 1) {
@@ -1266,20 +1259,14 @@ int main(int argc, char** argv) {
       heif_image_set_premultiplied_alpha(image.get(), premultiplied_alpha);
     }
 
-
-
     //ENCODE IMAGE
-    error = heif_context_encode_image(context.get(),
-                                      image.get(),
-                                      encoder,
-                                      options,
-                                      &handle);
+    error = heif_context_encode_image(context.get(), image.get(), encoder, options, &handle);
     if (error.code != 0) {
       heif_encoding_options_free(options);
       std::cerr << "Could not encode HEIF/AVIF file: " << error.message << "\n";
       return 1;
     }
-
+    
     //ENCODE THUMBNAIL
     if (thumbnail_bbox_size > 0) {
       struct heif_image_handle* thumbnail_handle;
@@ -1300,32 +1287,6 @@ int main(int argc, char** argv) {
         heif_image_handle_release(thumbnail_handle);
       }
     }
-
-    //SANDBOX
-    //************************************************************************************************************
-    int topImageCount = heif_context_get_number_of_top_level_images(context.get());
-    std::cout << "top Image Count " << topImageCount << std::endl;
-
-    int auxiliaryImageCount = heif_image_handle_get_number_of_auxiliary_images(handle, 0);
-    std::cout << "aux Image Count: " << auxiliaryImageCount << std::endl;
-
-    //QUESTION - this function implemented in heif.cc uses handle (handle->image), but I can't use handle in my code
-    // heif::HeifPixelImage* im_tset = &handle->image;
-
-    int metaboxCount = heif_image_handle_get_number_of_metadata_blocks(handle, 0);
-    std::cout << "Metadata Box Count: " << metaboxCount << std::endl;
-    // for (const auto& metadata : handle->image->get_metadata()) { }
-
-    // heif_context_debug_dump_boxes_to_file(context.get(), 1);
-
-    // std::shared_ptr<heif_image> image;
-    // struct heif_image_handle* handle;
-    
-    heif_context_get_box(context.get(), image.get(), handle, encoder);
-
-    std::cout << "End Sandbox" << std::endl;
-    //************************************************************************************************************
-
 
 
     //FREE
