@@ -206,7 +206,8 @@ Error ImageGrid::parse(const std::vector<uint8_t>& data)
 }
 
 
-std::vector<uint8_t> ImageGrid::write() const {
+std::vector<uint8_t> ImageGrid::write() const
+{
   int field_size;
 
   if (m_output_width > 0xFFFF ||
@@ -1001,10 +1002,6 @@ int HeifContext::Image::get_chroma_bits_per_pixel() const
 
   // NOLINTNEXTLINE(clang-analyzer-core.CallAndMessage)
   return m_heif_context->m_heif_file->get_chroma_bits_per_pixel_from_configuration(id);
-}
-
-std::shared_ptr<HeifFile> HeifContext::get_heif_file() {
-  return m_heif_file;
 }
 
 
@@ -1926,7 +1923,8 @@ Error HeifContext::encode_image_as_hevc(const std::shared_ptr<HeifPixelImage>& i
                                         struct heif_encoder* encoder,
                                         const struct heif_encoding_options* options,
                                         enum heif_image_input_class input_class,
-                                        std::shared_ptr<Image>& out_image) {
+                                        std::shared_ptr<Image>& out_image)
+{
   heif_item_id image_id = m_heif_file->add_new_image("hvc1");
   out_image = std::make_shared<Image>(this, image_id);
 
@@ -2509,4 +2507,8 @@ Error HeifContext::add_generic_metadata(const std::shared_ptr<Image>& master_ima
   m_heif_file->append_iloc_data(metadata_id, data_array);
 
   return Error::Ok;
+}
+
+std::shared_ptr<HeifFile> HeifContext::get_heif_file() {
+  return m_heif_file;
 }
