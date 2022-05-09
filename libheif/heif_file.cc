@@ -171,13 +171,24 @@ void HeifFile::write(StreamWriter& writer)
 }
 
 
-std::string HeifFile::debug_dump_boxes() const {
+std::string HeifFile::debug_dump_boxes() const
+{
   std::stringstream sstr;
+
+  bool first = true;
 
   for (const auto& box : m_top_level_boxes) {
     // dump box content for debugging
+
+    if (first) {
+      first = false;
+    }
+    else {
+      sstr << "\n";
+    }
+
     heif::Indent indent;
-    sstr << box->dump(indent) << "\n";
+    sstr << box->dump(indent);
   }
 
   return sstr.str();
