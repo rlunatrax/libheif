@@ -497,22 +497,13 @@ struct heif_error heif_context_get_image_handle(struct heif_context* ctx,
 LIBHEIF_API
 void heif_context_debug_dump_boxes_to_file(struct heif_context* ctx, int fd);
 
-
-
-
-//ADDED 5/3/2022 - by Devon Sookhoo
+// Created by Devon Sookhoo
+// Reads in the file specified at char* input_filename
+// Creates and empty infe box
+// Inserts empty infe box after
+// Prints all boxes to stdout
 LIBHEIF_API
-void heif_context_print_metadata(struct heif_context* ctx, 
-                          const struct heif_image* image, 
-                          struct heif_image_handle* handle,
-                          struct heif_encoder* encoder);
-LIBHEIF_API
-void heif_context_dump_info(struct heif_context* ctx);
-LIBHEIF_API
-void heif_context_foo();
-
-
-
+void heif_add_box_example(char* input_filename);
 
 LIBHEIF_API
 void heif_context_set_maximum_image_size_limit(struct heif_context* ctx, int maximum_width);
