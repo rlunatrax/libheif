@@ -458,41 +458,45 @@ void heif_context_debug_dump_boxes_to_file(struct heif_context* ctx, int fd)
   (void) written;
 }
 
-
-//Created by Devon Sookhoo
-LIBHEIF_API
-void heif_add_box_example(char* input_filename) {
-
-  //CREATE CONTEXT 
+std::shared_ptr<HeifFile> create_heif_file(char* input_filename) {
   std::shared_ptr<heif_context> ctx(heif_context_alloc(), [](heif_context* c) { heif_context_free(c); });
   if (!ctx) {
-    fprintf(stderr, "Could not create context object\n");
+    std::cerr << "Could not create context object" << std::endl;    
     exit(1);
   }
 
-  //OPEN IMAGE
   struct heif_error err = heif_context_read_from_file(ctx.get(), input_filename, nullptr);
   if (err.code != 0) {
     std::cerr << "Could not read HEIF/AVIF file: " << err.message << "\n";
     exit(1);
   }
 
-  //GET HEIF FILE
   std::shared_ptr<HeifFile> heif_file = ctx->context->get_heif_file();
 
-  //GET BOXES
+  return heif_file;
+}
+
+void printBoxes(std::vector<std::shared_ptr<Box>> boxes) {
+  for (const auto& box : boxes) {
+    heif::Indent indent;
+    std::cout << box->dump(indent);
+  }
+}
+
+LIBHEIF_API
+void heif_add_box_example(char* input_filename) {
+
+  std::shared_ptr<HeifFile> heif_file = create_heif_file(input_filename);
+  
   auto boxes = heif_file->get_top_level_boxes();
-  auto meta_box = boxes.at(1);                  
-  
-  //CREATE BOX
-  auto box_infe = std::make_shared<Box_infe>(); 
-  
-  //ADD BOX
-  meta_box->append_child_box(box_infe);         //add infe box to meta box
+  auto meta_box = boxes.at(1);              
+  std::shared_ptr<Box_iinf> iinf_box = heif_file->get_iinf_box();
 
-  //PRINT BOXES
-  heif_context_debug_dump_boxes_to_file(ctx.get(), STDOUT_FILENO); // dump to stdout
-
+  auto box_infe = std::make_shared<Box_infe>();
+  box_infe->set_item_name("item name");
+  boxes.push_back(box_infe); 
+  
+  printBoxes(boxes);
 }
 
 
@@ -1707,7 +1711,7 @@ static struct heif_error heif_file_writer_write(struct heif_context* ctx,
 
 
 struct heif_error heif_context_write_to_file(struct heif_context* ctx,
-                                             const char* filename) 
+                                             const char* filename)
 {
   heif_writer writer;
   writer.writer_api_version = 1;

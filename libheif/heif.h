@@ -497,7 +497,6 @@ struct heif_error heif_context_get_image_handle(struct heif_context* ctx,
 LIBHEIF_API
 void heif_context_debug_dump_boxes_to_file(struct heif_context* ctx, int fd);
 
-// Created by Devon Sookhoo
 // Reads in the file specified at char* input_filename
 // Creates and empty infe box
 // Inserts empty infe box after
